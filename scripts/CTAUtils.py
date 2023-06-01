@@ -79,6 +79,40 @@ def make_eos_subdirs(eos_files: List[str], sleep_time: int = 10, eos_prefix='/')
     time.sleep(sleep_time)
 
 
+def make_eos_subdirs_eosh(eos_files: List[str], sleep_time: int = 10, eos_prefix='/'):
+    # FIXME: Refactor this to be part of EosInfo
+
+    """
+    Make the subdirectories for the files we are going to be writing
+
+    :param eos_prefix:
+    :param eos_files: List of files
+    :param sleep_time: Time to sleep after making directories in EOS
+    :return:
+    """
+
+    EOS_METHOD = 'XrdSecPROTOCOL=sss'
+    EOS_KEYTAB = 'XrdSecSSSKT=/keytabs/ctafrontend_server_sss.keytab'
+    EOS_HOST = 'storagedev201.fnal.gov'
+
+    eos_directories = set()
+    for eos_file in eos_files:
+        eos_directory = os.path.dirname(os.path.normpath(eos_prefix + '/' + eos_file))
+        eos_directory = eos_directory.lstrip('/')
+        eos_directories.add(eos_directory)
+
+    with open('/tmp/make_directories.eosh', 'w') as eosh:
+        for eos_directory in eos_directories:
+            eosh.write(f'mkdir -p {eos_directory}\n')
+    # result = subprocess.run(['env', EOS_METHOD, EOS_KEYTAB, 'eos', '-r', '0', '0', f'root://{EOS_HOST}',
+    #                                  '/tmp/make_directories.eosh'], stdout=subprocess.PIPE)
+    # print(f'Script gives {result}')
+    # time.sleep(sleep_time)
+
+
+
+
+
 def add_media_types(engine):
     media_types = [
         {'name': 'LTO7M', 'capacity': 9000000000000, 'cartridge': 'LTO-7',

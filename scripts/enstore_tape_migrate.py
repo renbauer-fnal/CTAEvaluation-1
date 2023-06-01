@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from CTADatabaseModel import ArchiveFile, MediaType, TapeFile, Tape
-from CTAUtils import get_adler32_string, get_checksum_blob, make_eos_subdirs, add_media_types
+from CTAUtils import get_adler32_string, get_checksum_blob, make_eos_subdirs, add_media_types, make_eos_subdirs_eosh
 from EnstoreUtils import get_switch_epoch, convert_0_adler32_to_1_adler32, decode_bfid
 from EosInfo import EosInfo
 from MigrationConfig import MigrationConfig
@@ -72,14 +72,14 @@ def main():
                 enstore_files.append(row)
         create_cta_tape_from_enstore(engine, volume)
 
-    file_ids = insert_cta_files(cta_prefix, engine, enstore_files)
-
+#    file_ids = insert_cta_files(cta_prefix, engine, enstore_files)
+    file_ids = None
     # Make EOS directories for the files
     eos_files = [enstore_file['pnfs_path'] for enstore_file in enstore_files]
-    make_eos_subdirs(eos_prefix=cta_prefix, eos_files=eos_files)
+    make_eos_subdirs_eosh(eos_prefix=cta_prefix, eos_files=eos_files)
 
     # Make EOS file placeholders for the files
-    create_eos_files_new(cta_prefix, enstore_files, eos_info, file_ids)
+    create_eos_files_newer(cta_prefix, enstore_files, file_ids)
     return
     # No longer needed, done automatically
     update_eos_fileids(cta_prefix, engine, enstore_files, eos_info, file_ids)
@@ -108,6 +108,7 @@ def update_eos_fileids(cta_prefix, engine, enstore_files, eos_info, file_ids):
 
 def create_eos_files(cta_prefix, enstore_files, eos_info, file_ids):
     # Build the list of files for EOS to insert
+
     with open('/tmp/eos_files.csv', 'w') as csvfile, open(EOS_INSERT_LIST, 'a') as jsonfile:
         eos_file_inserts = csv.writer(csvfile, lineterminator='\n')
         for enstore_file in enstore_files:
@@ -143,6 +144,86 @@ def create_eos_files(cta_prefix, enstore_files, eos_info, file_ids):
     # Actually insert the files into EOS
     #   result = subprocess.run(['/root/eos-import-files-csv', '-c', MIGRATION_CONF], stdout=subprocess.PIPE)
     # Follow https://gitlab.cern.ch/cta/CTA/-/merge_requests/112/diffs#0d61d61ea27a782f8ca977f3003cb3dd4afa59af
+
+
+def create_eos_files_newer(cta_prefix, enstore_files, file_ids):
+    # Duplicated in CTAUtils.py
+
+    EOS_METHOD = 'XrdSecPROTOCOL=sss'
+    EOS_KEYTAB = 'XrdSecSSSKT=/keytabs/ctafrontend_server_sss.keytab'
+
+    files_need_creating = False
+    existing_files = existing_eos_files(cta_prefix, enstore_files)
+
+    # Build the list of files for EOS to insert
+    with open(EOS_INSERT_LIST, 'w') as jsonfile:
+        for enstore_file in enstore_files:
+            file_name = enstore_file['pnfs_path']
+            enstore_id = enstore_file['bfid']
+            enstore_id = enstore_id.replace('GCMS', '01')  # EOS wants an integer for the value. Map it.
+            file_size = int(enstore_file['size'])
+            _dummy, file_timestamp, _dummy = decode_bfid(enstore_file['bfid'])
+            if file_timestamp < get_switch_epoch():
+                adler_int, adler_string = convert_0_adler32_to_1_adler32(int(enstore_file['crc']), file_size)
+            else:
+                adler_int, adler_string = get_adler32_string(int(enstore_file['crc']))
+
+            # Get the EOS container ID and set all paths correctly
+            destination_file = os.path.normpath(cta_prefix + '/' + file_name)
+            # FIXME: Dummied out for testing
+            archive_file_id = 1
+            # archive_file_id = file_ids[file_name]
+            if destination_file not in existing_files:
+                files_need_creating = True
+                new_eos_file = {'eosPath': destination_file, 'diskInstance': CTA_INSTANCE,
+                                'archiveId': str(archive_file_id), 'size': str(file_size), 'checksumType': 'ADLER32',
+                                'checksumValue': adler_string, 'enstoreId': enstore_id}
+                jsonfile.write(json.dumps(new_eos_file) + '\n')
+            else:
+                print(f'File {destination_file} already exists. Skipping.')
+
+    breakpoint()
+
+    # Actually insert the files into EOS
+    if files_need_creating:
+        result = subprocess.run(['env', EOS_METHOD, EOS_KEYTAB, 'cta-eos-namespace-inject', '--json', EOS_INSERT_LIST],
+                                stdout=subprocess.PIPE)
+
+
+def existing_eos_files(cta_prefix, enstore_files):
+    """
+    Find the existing files in the directories mentioned in enstore_files
+    """
+
+    # FIXME: Need to centrally define these
+    EOS_METHOD = 'XrdSecPROTOCOL=sss'
+    EOS_KEYTAB = 'XrdSecSSSKT=/keytabs/ctafrontend_server_sss.keytab'
+    EOS_HOST = 'storagedev201.fnal.gov'
+
+    eos_directories = set()
+    existing_files = set()
+    for enstore_file in enstore_files:
+        path_parts = enstore_file['pnfs_path'].split('/')
+        eos_directory = cta_prefix + '/'.join(path_parts[:-1]) + '/'
+        eos_directories.add(eos_directory)
+
+    with open('/tmp/list_directories.eosh', 'w') as eosh:
+        for eos_directory in eos_directories:
+            eosh.write(f'cd {eos_directory}\n')
+            eosh.write(f'pwd\n')
+            eosh.write(f'ls\n')
+
+    result = subprocess.run(['env', EOS_METHOD, EOS_KEYTAB,
+                             'eos', '-r', '0', '0', f'root://{EOS_HOST}', '/tmp/list_directories.eosh'],
+                            capture_output=True, text=True)
+    current_dir = None
+    for line in result.stdout.split('\n'):
+        if '/' in line:
+            current_dir = line
+        else:
+            existing_files.add(os.path.normpath(current_dir + line))
+
+    return existing_files
 
 
 def create_eos_files_new(cta_prefix, enstore_files, eos_info, file_ids):
