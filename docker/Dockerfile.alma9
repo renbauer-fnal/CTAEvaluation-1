@@ -16,7 +16,7 @@ RUN dnf install -y epel-release.noarch && \
 
 # Verified to here
 
-ADD https://raw.githubusercontent.com/cern-eos/eos/master/repo/eos-el9s.repo /etc/yum.repos.d/eos-xrootd.repo
+ADD eos-xrootd-el9.repo /etc/yum.repos.d/eos-xrootd.repo
 ADD oracle-instant-client.repo /etc/yum.repos.d
 
 RUN wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
