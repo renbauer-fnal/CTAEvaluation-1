@@ -49,21 +49,16 @@ RUN pip install --upgrade protobuf sqlalchemy psycopg2-binary python-libarchive
 # libradosstriper1
 RUN dnf -y install librados2
 
-ADD tmp/cta-cli-4-4958535git71bda8fb.el7.cern.x86_64.rpm /root/cta-cli-4-4958535git71bda8fb.el7.cern.x86_64.rpm
-ADD tmp/cta-lib-common-4-4958535git71bda8fb.el7.cern.x86_64.rpm /root/cta-common-4-4958535git71bda8fb.el7.cern.x86_64.rpm
+# Breaks here. No surprise CTA RPMs for EL7 don't install. Wait for EL9 RPMs
 
-RUN yum -y install /root/*.rpm
+#ADD tmp/cta-cli-4-4958535git71bda8fb.el7.cern.x86_64.rpm /root/cta-cli-4-4958535git71bda8fb.el7.cern.x86_64.rpm
+#ADD tmp/cta-lib-common-4-4958535git71bda8fb.el7.cern.x86_64.rpm /root/cta-common-4-4958535git71bda8fb.el7.cern.x86_64.rpm
+
+#RUN yum -y install /root/*.rpm
 
 # From here we want to remake the container as this code will change
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 RUN git clone https://github.com/ericvaandering/CTAEvaluation.git
-
-#ADD tmp/eos-test-file-inject /root/eos-test-file-inject
-#ADD tmp/eos-import-files-csv /root/eos-import-files-csv
-#ADD tmp/libctacatalogue.so.0 /usr/lib64
-#ADD tmp/libctacommon.so.0 /usr/lib64
-#ADD tmp/libctardbms.so.0 /usr/lib64
-#ADD tmp/libctardbmswrapper.so.0 /usr/lib64
 
 ADD cta-krb5.conf /etc/krb5.conf
 ADD cta-cli.conf /etc/cta/cta-cli.conf
