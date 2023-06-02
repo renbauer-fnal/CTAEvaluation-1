@@ -17,7 +17,7 @@ RUN dnf install -y epel-release.noarch && \
 # Verified to here
 
 ADD eos-xrootd-el9.repo /etc/yum.repos.d/eos-xrootd.repo
-ADD oracle-instant-client-el9.repo /etc/yum.repos.d
+#ADD oracle-instant-client-el9.repo /etc/yum.repos.d
 
 RUN wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol9 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 
@@ -26,6 +26,8 @@ RUN wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol9 -O /etc/pki/rpm-gp
 RUN yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 RUN yum -y install postgresql14 postgresql14-libs
 ENV PATH="/usr/pgsql-14/bin:${PATH}"
+
+RUN rpm -i https://download.oracle.com/otn_software/linux/instantclient/1912000/oracle-instantclient19.12-basiclite-19.12.0.0.0-1.x86_64.rpm
 
 RUN yum install -y rh-python38 rh-python38-python-devel oracle-instantclient19.3-basic \
                    eos-client protobuf3 grpc-devel xrootd-client xrootd-client-libs libarchive libarchive-devel \
