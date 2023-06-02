@@ -4,7 +4,7 @@ FROM almalinux:9
 ARG CTA_VERSION=5-4956138git71bda8fb
 ARG CTA_JOB=26724272
 
-RUN dnf install 'dnf-command(config-manager)'
+RUN dnf install -y 'dnf-command(config-manager)'
 RUN dnf config-manager --set-enabled crb
 RUN dnf install -y epel-release.noarch && \
     dnf upgrade -y && \
