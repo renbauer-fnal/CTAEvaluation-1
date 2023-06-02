@@ -15,13 +15,10 @@ RUN dnf install -y epel-release.noarch && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
-# Verified to here
-
 ADD eos-xrootd-el9.repo /etc/yum.repos.d/eos-xrootd.repo
 #ADD oracle-instant-client-el9.repo /etc/yum.repos.d
 
 RUN wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol9 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-
 
 #RUN yum -y install centos-release-scl-rh centos-release-scl
 RUN dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
@@ -39,7 +36,9 @@ RUN dnf install -y eos-client protobuf grpc-devel xrootd-client xrootd-client-li
 # Why we have a version mis-match I don't know
 #RUN ln -s /opt/eos/xrootd/lib64/libXrdCl.so.2 /usr/lib64/libXrdCl.so.2
 
-RUN /opt/rh/rh-python38/root/usr/bin/pip install --upgrade protobuf sqlalchemy psycopg2-binary python-libarchive
+# Good through here
+
+RUN pip install --upgrade protobuf sqlalchemy psycopg2-binary python-libarchive
 #RUN /opt/rh/rh-python38/root/usr/bin/pip3 install --upgrade protobuf sqlalchemy psycopg2 python-libarchive
 
 
