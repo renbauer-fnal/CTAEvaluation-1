@@ -9,7 +9,7 @@ RUN dnf install -y epel-release.noarch && \
     dnf upgrade -y && \
     dnf install -y \
         python-pip \
-        git curl which nano wget \
+        git which nano wget \
         && \
     dnf clean all && \
     rm -rf /var/cache/dnf
