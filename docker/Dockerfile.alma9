@@ -4,7 +4,7 @@ FROM almalinux:9
 ARG CTA_VERSION=5-4956138git71bda8fb
 ARG CTA_JOB=26724272
 
-
+RUN dnf config-manager --set-enabled crb
 RUN dnf install -y epel-release.noarch && \
     dnf upgrade -y && \
     dnf install -y \
@@ -29,7 +29,7 @@ ENV PATH="/usr/pgsql-14/bin:${PATH}"
 
 RUN yum -y install  https://download.oracle.com/otn_software/linux/instantclient/1912000/oracle-instantclient19.12-basiclite-19.12.0.0.0-1.x86_64.rpm
 
-# Removed libarchive-devel 
+# Removed libarchive-devel
 RUN yum install -y eos-client protobuf grpc-devel xrootd-client xrootd-client-libs libarchive \
                    mt-st mtx lsscsi \
     && yum clean all \
