@@ -27,7 +27,7 @@ RUN yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x
 RUN yum -y install postgresql14 postgresql14-libs
 ENV PATH="/usr/pgsql-14/bin:${PATH}"
 
-RUN rpm -i https://download.oracle.com/otn_software/linux/instantclient/1912000/oracle-instantclient19.12-basiclite-19.12.0.0.0-1.x86_64.rpm
+RUN yum -y install  https://download.oracle.com/otn_software/linux/instantclient/1912000/oracle-instantclient19.12-basiclite-19.12.0.0.0-1.x86_64.rpm
 
 RUN yum install -y rh-python38 rh-python38-python-devel oracle-instantclient19.3-basic \
                    eos-client protobuf3 grpc-devel xrootd-client xrootd-client-libs libarchive libarchive-devel \
