@@ -46,7 +46,8 @@ RUN pip install --upgrade protobuf sqlalchemy psycopg2-binary python-libarchive
 
 # Install CEPH stuff
 #RUN rpm --import 'https://download.ceph.com/keys/release.asc'
-RUN dnf -y install librados2 libradosstriper1
+# libradosstriper1
+RUN dnf -y install librados2
 
 ADD tmp/cta-cli-4-4958535git71bda8fb.el7.cern.x86_64.rpm /root/cta-cli-4-4958535git71bda8fb.el7.cern.x86_64.rpm
 ADD tmp/cta-lib-common-4-4958535git71bda8fb.el7.cern.x86_64.rpm /root/cta-common-4-4958535git71bda8fb.el7.cern.x86_64.rpm
